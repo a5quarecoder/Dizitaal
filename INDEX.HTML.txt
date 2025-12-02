@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>d i z i t a l | Subscriptions</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Space Grotesk (Headings) & JetBrains Mono (Tech details) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        void: '#050505',
+                        acid: '#ccff00',
+                        lavender: '#d4b3ff',
+                        surface: '#121212',
+                        glass: 'rgba(255, 255, 255, 0.03)'
+                    },
+                    fontFamily: {
+                        sans: ['Space Grotesk', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'spin-slow': 'spin 12s linear infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'marquee': 'marquee 25s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        marquee: {
+                            '0%': { transform: 'translateX(0%)' },
+                            '100%': { transform: 'translateX(-100%)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ccff00;
+        }
+
+        /* Noise Texture Overlay */
+        .noise-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Abstract Art for Placeholders */
+        .art-gradient-1 { background: radial-gradient(circle at 50% 50%, #ccff00 0%, transparent 60%), #1a1a1a; }
+        .art-gradient-2 { background: linear-gradient(45deg, #d4b3ff, #1a1a1a); }
+        .art-gradient-3 { background: conic-gradient(from 0deg, #333, #000, #ccff00, #000); }
+        .art-gradient-4 { background: repeating-linear-gradient(45deg, #111 0px, #111 10px, #222 10px, #222 20px); }
+        
+        /* Product Specific Gradients */
+        .bg-netflix { background: linear-gradient(to bottom right, #E50914 0%, #000000 80%); }
+        .bg-spotify { background: linear-gradient(to bottom right, #1DB954 0%, #000000 80%); }
+        .bg-ai { background: linear-gradient(to bottom right, #00A67E 0%, #000000 80%); }
+        .bg-prime { background: linear-gradient(to bottom right, #00A8E1 0%, #000000 80%); }
+
+        /* Utility */
+        .text-stroke {
+            -webkit-text-stroke: 1px rgba(255,255,255,0.2);
+            color: transparent;
+        }
+        .clip-text-image {
+            background-clip: text;
+            -webkit-background-clip: text;
+        }
+        
+        /* View Transitions */
+        .view-transition {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .hidden-view {
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-void text-white font-sans antialiased overflow-x-hidden selection:bg-acid selection:text-black">
+
+    <!-- Noise Overlay -->
+    <div class="noise-bg"></div>
+
+    <!-- Background Glows -->
+    <div class="fixed top-[-20%] left-[-10%] w-[600px] h-[600px] bg-acid rounded-full blur-[120px] opacity-10 pointer-events-none animate-float"></div>
+    <div class="fixed bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-lavender rounded-full blur-[120px] opacity-10 pointer-events-none" style="animation-delay: -3s;"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-40 backdrop-blur-md border-b border-white/5 bg-void/80">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="javascript:showHome()" class="text-2xl font-bold tracking-tighter hover:text-acid transition-colors group">
+                d i z i <span class="group-hover:text-lavender transition-colors">t a l</span>
+            </a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center gap-8 font-mono text-sm text-gray-400">
+                <a href="javascript:showHome()" class="hover:text-white transition-colors">STORE</a>
+                <a href="#membership" class="hover:text-white transition-colors">MEMBERSHIP</a>
+                
+                <button class="flex items-center gap-2 text-white hover:text-acid transition-colors relative">
+                    <span class="absolute -top-2 -right-2 bg-acid text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full" id="cart-count">0</span>
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu Btn -->
+            <button class="md:hidden text-white" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden absolute top-20 left-0 w-full bg-void border-b border-white/10 p-6 flex flex-col gap-6 md:hidden">
+            <a href="javascript:showHome()" class="text-xl">STORE</a>
+            <a href="#membership" class="text-xl">MEMBERSHIP</a>
+        </div>
+    </nav>
+
+    <!-- MAIN HOME VIEW -->
+    <div id="home-view" class="view-transition opacity-100">
+        
+        <!-- Hero Section -->
+        <header class="relative pt-32 pb-16 md:pt-48 md:pb-24 px-6">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-col md:flex-row items-end justify-between gap-12">
+                    <div class="max-w-3xl z-10">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs font-mono text-acid mb-6">
+                            <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-acid opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-acid"></span>
+                            </span>
+                            INSTANT DELIVERY
+                        </div>
+                        <h1 class="text-6xl md:text-8xl font-bold leading-[0.9] tracking-tighter mb-8">
+                            PREMIUM <br>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-acid to-white">SUBSCRIPTIONS</span>.
+                        </h1>
+                        <p class="text-gray-400 text-lg md:text-xl max-w-xl leading-relaxed mb-10">
+                            Get access to top-tier streaming, AI tools, and music services at unbeatable prices in BDT.
+                        </p>
+                    </div>
+
+                    <!-- Abstract Hero Visual -->
+                    <div class="relative w-full md:w-1/3 aspect-square hidden md:flex items-center justify-center">
+                        <div class="w-full h-full border border-white/10 rounded-full animate-spin-slow flex items-center justify-center">
+                            <div class="w-[70%] h-[70%] border border-dashed border-white/20 rounded-full"></div>
+                        </div>
+                        <div class="absolute text-center">
+                            <div class="text-4xl font-bold text-acid">24/7</div>
+                            <div class="text-xs font-mono text-gray-500 mt-1">SUPPORT</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Marquee -->
+        <div class="border-y border-white/10 bg-surface/50 overflow-hidden py-4 mb-20">
+            <div class="whitespace-nowrap animate-marquee flex gap-12 text-2xl md:text-4xl font-bold text-stroke font-mono opacity-50 select-none">
+                <span>INSTANT ACCESS</span> <span>•</span> <span>SECURE LOGIN</span> <span>•</span> <span>WARRANTY INCLUDED</span> <span>•</span> <span>BEST PRICES IN BD</span> <span>•</span>
+                <span>INSTANT ACCESS</span> <span>•</span> <span>SECURE LOGIN</span> <span>•</span> <span>WARRANTY INCLUDED</span> <span>•</span> <span>BEST PRICES IN BD</span> <span>•</span>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <section class="max-w-7xl mx-auto px-6 mb-12">
+            <div class="flex flex-wrap gap-4 font-mono text-sm" id="filters">
+                <button class="filter-btn bg-white text-black px-4 py-2 rounded-sm font-bold" onclick="filterProducts('all', this)">ALL</button>
+                <button class="filter-btn bg-surface border border-white/10 hover:border-acid px-4 py-2 rounded-sm transition-colors text-gray-400 hover:text-white" onclick="filterProducts('streaming', this)">STREAMING</button>
+                <button class="filter-btn bg-surface border border-white/10 hover:border-acid px-4 py-2 rounded-sm transition-colors text-gray-400 hover:text-white" onclick="filterProducts('ai', this)">AI TOOLS</button>
+                <button class="filter-btn bg-surface border border-white/10 hover:border-acid px-4 py-2 rounded-sm transition-colors text-gray-400 hover:text-white" onclick="filterProducts('music', this)">MUSIC</button>
+                <button class="filter-btn bg-surface border border-white/10 hover:border-acid px-4 py-2 rounded-sm transition-colors text-gray-400 hover:text-white" onclick="filterProducts('creative', this)">CREATIVE</button>
+            </div>
+        </section>
+
+        <!-- Shop Grid -->
+        <section id="products-grid" class="max-w-7xl mx-auto px-6 mb-32">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="products-container">
+                <!-- Products will be injected here by JS -->
+            </div>
+        </section>
+
+        <!-- Subscription Section -->
+        <section id="membership" class="py-24 bg-surface/30 border-y border-white/5 relative overflow-hidden">
+            <div class="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-acid/5 to-transparent pointer-events-none"></div>
+            <div class="max-w-7xl mx-auto px-6 relative z-10">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+                    <div>
+                        <h2 class="text-4xl md:text-5xl font-bold mb-4">RESELLER PLANS.</h2>
+                        <p class="text-gray-400 max-w-md">Start your own digital product business with our bulk reseller panels.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="p-8 border border-white/10 rounded-xl hover:border-white/20 transition-colors bg-void">
+                        <div class="text-sm font-mono text-gray-400 mb-2">STARTER</div>
+                        <div class="text-3xl font-bold mb-6">৳0</div>
+                        <ul class="space-y-4 mb-8 text-sm text-gray-400">
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-white"></i> Pay as you go</li>
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-white"></i> Standard Prices</li>
+                        </ul>
+                        <button class="w-full py-3 border border-white/20 rounded font-bold hover:bg-white/5 transition-colors">JOIN NOW</button>
+                    </div>
+
+                    <div class="p-8 border border-acid bg-surface rounded-xl relative transform md:-translate-y-4 shadow-[0_0_30px_rgba(204,255,0,0.1)]">
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-acid text-black text-xs font-bold px-3 py-1 rounded-full">POPULAR</div>
+                        <div class="text-sm font-mono text-acid mb-2">RESELLER</div>
+                        <div class="text-4xl font-bold mb-6">৳2500<span class="text-lg text-gray-500 font-normal">/mo</span></div>
+                        <ul class="space-y-4 mb-8 text-sm text-gray-300">
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-acid"></i> 20% Discount on All Items</li>
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-acid"></i> API Access</li>
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-acid"></i> Priority Support</li>
+                        </ul>
+                        <button class="w-full py-3 bg-acid text-black rounded font-bold hover:bg-white transition-colors">BECOME RESELLER</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- PRODUCT DETAIL VIEW (Hidden by default) -->
+    <div id="product-view" class="hidden-view fixed inset-0 z-50 bg-void overflow-y-auto">
+        <div class="min-h-screen">
+            <!-- Back Button Navigation -->
+            <nav class="sticky top-0 w-full z-40 backdrop-blur-md border-b border-white/5 bg-void/90 p-6">
+                <div class="max-w-7xl mx-auto flex items-center justify-between">
+                    <button onclick="showHome()" class="flex items-center gap-2 text-white hover:text-acid transition-colors group">
+                        <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-1 transition-transform"></i>
+                        <span class="font-mono">BACK TO STORE</span>
+                    </button>
+                    <a href="javascript:showHome()" class="text-xl font-bold tracking-tighter">d i z i t a l</a>
+                </div>
+            </nav>
+
+            <div class="max-w-7xl mx-auto px-6 py-12 md:py-20">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+                    
+                    <!-- Product Visual -->
+                    <div class="sticky top-32">
+                        <div id="detail-image" class="aspect-square w-full rounded-2xl border border-white/10 overflow-hidden relative art-gradient-1">
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span id="detail-category-badge" class="bg-black/50 backdrop-blur px-4 py-2 text-sm font-mono border border-white/10 rounded-full">CATEGORY</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Info -->
+                    <div>
+                        <div class="flex items-center gap-4 mb-6">
+                            <span id="detail-tag" class="text-xs font-mono text-acid bg-acid/10 px-3 py-1 rounded-full border border-acid/20">INSTANT DELIVERY</span>
+                            <span class="text-xs font-mono text-gray-500">DIGITAL PRODUCT</span>
+                        </div>
+                        
+                        <h1 id="detail-title" class="text-5xl md:text-6xl font-bold mb-4 tracking-tight">Product Title</h1>
+                        <div id="detail-price" class="text-3xl font-mono text-acid mb-8">৳000</div>
+                        
+                        <p id="detail-desc" class="text-gray-400 text-lg leading-relaxed mb-12 border-b border-white/10 pb-12">
+                            Description goes here...
+                        </p>
+
+                        <div class="mb-12">
+                            <h3 class="font-bold mb-6 text-white">WHAT'S INCLUDED:</h3>
+                            <ul id="detail-features" class="space-y-4 font-mono text-sm text-gray-400">
+                                <!-- Features injected via JS -->
+                            </ul>
+                        </div>
+
+                        <div class="flex flex-col gap-4">
+                            <button onclick="addToCart()" class="w-full py-4 bg-acid text-black font-bold text-lg rounded hover:bg-white transition-colors flex items-center justify-center gap-3">
+                                <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                                BUY NOW
+                            </button>
+                            <div class="text-center text-xs text-gray-500 font-mono mt-2">
+                                Secured by SSL. Instant email delivery.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 bg-black pt-16 pb-8 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center pt-8 text-xs text-gray-600 font-mono">
+                <div>&copy; 2024 DIZITAL INC. BD.</div>
+                <div class="flex gap-6 mt-4 md:mt-0">
+                    <a href="#" class="hover:text-gray-400">PRIVACY</a>
+                    <a href="#" class="hover:text-gray-400">TERMS</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // --- PRODUCT DATA ---
+        const products = [
+            // STREAMING
+            {
+                id: 1,
+                category: 'streaming',
+                title: 'Netflix Premium',
+                price: '400',
+                desc: 'Enjoy 4K UHD streaming on your favorite device. This is a shared profile on a private premium account. Full warranty included.',
+                gradient: 'bg-netflix',
+                features: ['4K Ultra HD Quality', '1 Screen Access', 'Works on TV/Mobile/PC', '30 Days Warranty', 'Renewable Account']
+            },
+            {
+                id: 2,
+                category: 'streaming',
+                title: 'Prime Video',
+                price: '300',
+                desc: 'Access Amazon Originals and thousands of movies. Ad-free streaming experience with offline download support.',
+                gradient: 'bg-prime',
+                features: ['HD/UHD Streaming', 'Private Profile', '6 Months Warranty', 'No VPN Needed']
+            },
+            {
+                id: 3,
+                category: 'streaming',
+                title: 'YouTube Premium',
+                price: '350',
+                desc: 'Ad-free YouTube and YouTube Music. Background play enabled. Added to your own email via family invite.',
+                gradient: 'art-gradient-1',
+                features: ['Ad-free Experience', 'Background Play', 'YouTube Music Included', 'On Your Own Email']
+            },
+            {
+                id: 4,
+                category: 'streaming',
+                title: 'Disney+ Hotstar',
+                price: '450',
+                desc: 'Stream exclusive Disney, Marvel, Pixar, and Star Wars content.',
+                gradient: 'art-gradient-2',
+                features: ['4K Quality', '1 Device Login', '1 Year Validity', 'Sports Included']
+            },
+            
+            // AI TOOLS
+            {
+                id: 5,
+                category: 'ai',
+                title: 'ChatGPT Plus',
+                price: '850',
+                desc: 'Access GPT-4, DALL-E 3, and advanced data analysis. Shared account access with high reliability.',
+                gradient: 'bg-ai',
+                features: ['GPT-4 Access', 'DALL-E 3 Image Gen', 'Browsing Enabled', 'Shared Access', 'Monthly Renewal']
+            },
+            {
+                id: 6,
+                category: 'ai',
+                title: 'Midjourney Pro',
+                price: '1200',
+                desc: 'Create stunning AI art with Midjourney v6. Private server access available for higher tiers.',
+                gradient: 'art-gradient-4',
+                features: ['Fast GPU Hours', 'Private Mode', 'Commercial Usage', 'Version 6 Access']
+            },
+            {
+                id: 7,
+                category: 'ai',
+                title: 'Jasper AI',
+                price: '1500',
+                desc: 'The best AI writer for marketing and content creation. Creator plan features included.',
+                gradient: 'art-gradient-2',
+                features: ['Unlimited Words', '50+ Templates', 'Brand Voice', 'Plagiarism Checker']
+            },
+
+            // MUSIC
+            {
+                id: 8,
+                category: 'music',
+                title: 'Spotify Premium',
+                price: '450',
+                desc: 'Upgrade your own account to Premium. No ads, unlimited skips, and offline listening.',
+                gradient: 'bg-spotify',
+                features: ['On Your Own Email', 'No Ads', 'Offline Mode', 'High Quality Audio', '12 Months Warranty']
+            },
+            {
+                id: 9,
+                category: 'music',
+                title: 'Apple Music',
+                price: '500',
+                desc: 'Lossless audio streaming and Dolby Atmos support. 3 months extended trial activation.',
+                gradient: 'art-gradient-3',
+                features: ['Lossless Audio', 'Dolby Atmos', 'On Personal ID', '3 Months Access']
+            },
+
+            // CREATIVE / TOOLS
+            {
+                id: 10,
+                category: 'creative',
+                title: 'Canva Pro',
+                price: '200',
+                desc: 'Design anything with Canva Pro. Access premium templates, photos, and fonts. Education team invite.',
+                gradient: 'art-gradient-2',
+                features: ['Lifetime Access', 'Magic Resize', 'Background Remover', 'Brand Kit', 'On Your Own Email']
+            },
+            {
+                id: 11,
+                category: 'creative',
+                title: 'Adobe Full Cloud',
+                price: '2500',
+                desc: 'Access all Adobe Creative Cloud apps including Photoshop, Illustrator, Premiere Pro.',
+                gradient: 'art-gradient-4',
+                features: ['All Apps Included', '100GB Cloud Storage', 'On Your Own Email', '1 Month Validity']
+            },
+             {
+                id: 12,
+                category: 'streaming',
+                title: 'Crunchyroll Fan',
+                price: '250',
+                desc: 'The world\'s largest anime collection. Watch new episodes 1 hour after Japan.',
+                gradient: 'art-gradient-1',
+                features: ['Ad-free Anime', 'Simulcast', 'HD Streaming', '1 Device']
+            }
+        ];
+
+        // --- RENDER PRODUCTS ---
+        const container = document.getElementById('products-container');
+
+        function renderProducts(filter = 'all') {
+            container.innerHTML = '';
+            
+            const filtered = filter === 'all' 
+                ? products 
+                : products.filter(p => p.category === filter);
+
+            filtered.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'group relative bg-surface border border-white/5 hover:border-acid/50 transition-all duration-300 cursor-pointer';
+                card.onclick = () => showProductDetail(product.id);
+                
+                card.innerHTML = `
+                    <div class="aspect-square w-full ${product.gradient} overflow-hidden relative">
+                        <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
+                        <div class="absolute top-4 left-4 bg-black/50 backdrop-blur px-2 py-1 text-[10px] font-mono border border-white/10 uppercase">${product.category}</div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-lg font-bold">${product.title}</h3>
+                            <span class="text-acid font-mono">৳${product.price}</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mb-4 line-clamp-1">${product.desc}</p>
+                        <button class="w-full py-3 border border-white/10 text-sm font-mono hover:bg-white hover:text-black transition-colors flex items-center justify-center gap-2 group-hover:border-white/0">
+                            VIEW DETAILS
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // --- FILTER LOGIC ---
+        function filterProducts(category, btn) {
+            // Update UI
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('bg-white', 'text-black');
+                b.classList.add('bg-surface', 'text-gray-400');
+            });
+            btn.classList.remove('bg-surface', 'text-gray-400');
+            btn.classList.add('bg-white', 'text-black');
+
+            // Render
+            renderProducts(category);
+        }
+
+        // --- NAVIGATION / SPA LOGIC ---
+        const homeView = document.getElementById('home-view');
+        const productView = document.getElementById('product-view');
+
+        function showHome() {
+            productView.classList.add('hidden-view');
+            homeView.classList.remove('hidden-view');
+            window.scrollTo(0, 0);
+        }
+
+        function showProductDetail(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+
+            // Populate Detail View
+            document.getElementById('detail-title').innerText = product.title;
+            document.getElementById('detail-price').innerText = '৳' + product.price;
+            document.getElementById('detail-desc').innerText = product.desc;
+            document.getElementById('detail-category-badge').innerText = product.category.toUpperCase();
+            
+            // Set Gradient
+            const imgContainer = document.getElementById('detail-image');
+            imgContainer.className = `aspect-square w-full rounded-2xl border border-white/10 overflow-hidden relative ${product.gradient}`;
+
+            // Populate Features
+            const featList = document.getElementById('detail-features');
+            featList.innerHTML = '';
+            product.features.forEach(f => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center gap-3 border-b border-white/5 pb-2';
+                li.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-acid"></i> ${f}`;
+                featList.appendChild(li);
+            });
+
+            // Switch View
+            homeView.classList.add('hidden-view');
+            productView.classList.remove('hidden-view');
+            
+            // Refresh Icons
+            lucide.createIcons();
+            window.scrollTo(0, 0);
+        }
+
+        // --- CART LOGIC ---
+        let count = 0;
+        const cartBadge = document.getElementById('cart-count');
+        
+        function addToCart() {
+            count++;
+            cartBadge.innerText = count;
+            
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = `<span class="font-bold">ADDED TO CART!</span>`;
+            btn.classList.remove('bg-acid', 'text-black');
+            btn.classList.add('bg-white', 'text-black');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.add('bg-acid', 'text-black');
+                btn.classList.remove('bg-white', 'text-black');
+                lucide.createIcons();
+            }, 1500);
+        }
+
+        // Init
+        renderProducts();
+
+    </script>
+</body>
+</html>

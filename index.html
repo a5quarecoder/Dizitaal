@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dizital | Premium Digital Store</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        void: '#050505',
+                        acid: '#ccff00',
+                        lavender: '#d4b3ff',
+                        surface: '#121212',
+                        surfaceHighlight: '#1A1A1A'
+                    },
+                    fontFamily: {
+                        sans: ['"Space Grotesk"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-glow': 'pulse-glow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        'pulse-glow': {
+                            '0%, 100%': { opacity: 1, boxShadow: '0 0 20px rgba(204, 255, 0, 0.2)' },
+                            '50%': { opacity: .5, boxShadow: '0 0 5px rgba(204, 255, 0, 0.1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #050505; color: #e5e7eb; }
+        
+        /* Noise Texture */
+        .noise-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 50; opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        
+        .glass-panel {
+            background: rgba(18, 18, 18, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .orb { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -1; opacity: 0.3; pointer-events: none; }
+        .orb-1 { width: 500px; height: 500px; background: #ccff00; top: -200px; left: -100px; }
+        .orb-2 { width: 400px; height: 400px; background: #d4b3ff; bottom: -100px; right: -100px; }
+
+        /* View Router Transitions */
+        .view-section { display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .view-section.active { display: block; opacity: 1; }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ccff00; }
+    </style>
+</head>
+<body class="antialiased min-h-screen relative font-sans selection:bg-acid selection:text-black">
+
+    <div class="noise-overlay"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-6 left-6 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- NAVBAR -->
+    <nav class="fixed top-0 w-full z-40 glass-panel border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center gap-12">
+                    <div class="cursor-pointer group" onclick="app.router.go('home')">
+                        <span class="text-2xl font-bold tracking-tighter text-white group-hover:text-acid transition-colors">dizital<span class="text-acid">.</span></span>
+                    </div>
+                    <div class="hidden md:flex space-x-8">
+                        <button onclick="app.router.go('home')" class="text-sm font-medium hover:text-acid transition-colors">Store</button>
+                        <button onclick="app.router.go('reseller')" class="text-sm font-medium hover:text-acid transition-colors">Reseller</button>
+                        <button onclick="app.router.go('support')" class="text-sm font-medium hover:text-acid transition-colors">Support</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <div id="nav-auth-section" class="flex items-center gap-4"></div>
+                    <div class="relative cursor-pointer" onclick="app.router.go('cart')">
+                        <i data-lucide="shopping-cart" class="h-6 w-6 text-gray-300 hover:text-acid transition-colors"></i>
+                        <span id="cart-count" class="absolute -top-2 -right-2 bg-acid text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full font-mono hidden">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- APP CONTAINER -->
+    <main class="pt-24 pb-12 min-h-screen">
+
+        <!-- VIEW 1: HOME -->
+        <section id="view-home" class="view-section active">
+            <!-- Hero -->
+            <div class="max-w-7xl mx-auto px-4 lg:px-8 mb-12">
+                <div class="relative bg-surfaceHighlight rounded-2xl p-8 md:p-16 border border-white/10 overflow-hidden">
+                    <div class="absolute top-0 right-0 w-96 h-96 bg-acid/10 blur-[80px] rounded-full pointer-events-none"></div>
+                    <div class="relative z-10 max-w-2xl">
+                        <div class="flex items-center gap-3 mb-6">
+                            <span class="bg-acid text-black text-xs font-bold px-2 py-1 font-mono uppercase">24/7 Auto-Delivery</span>
+                            <span class="text-acid text-xs font-mono flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3"></i> WARRANTY GUARANTEED</span>
+                        </div>
+                        <h1 class="text-5xl md:text-7xl font-bold tracking-tighter leading-none mb-6">
+                            DIGITAL FREEDOM <br> STARTS HERE.
+                        </h1>
+                        <p class="text-gray-400 text-lg mb-8 max-w-lg">Premium subscriptions at reseller prices. Instant delivery via WhatsApp. Local payments accepted.</p>
+                        <button onclick="app.scrollTo('shop-grid')" class="bg-acid hover:bg-white text-black font-bold py-3 px-8 rounded-sm transition-colors flex items-center gap-2">
+                            BROWSE SHOP <i data-lucide="arrow-down" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Trust Badges -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                    <div class="glass-panel p-4 flex items-center justify-center gap-3">
+                        <i data-lucide="zap" class="text-acid"></i> <span class="text-xs font-mono font-bold">INSTANT DELIVERY</span>
+                    </div>
+                    <div class="glass-panel p-4 flex items-center justify-center gap-3">
+                        <i data-lucide="shield" class="text-acid"></i> <span class="text-xs font-mono font-bold">25 DAY WARRANTY</span>
+                    </div>
+                    <div class="glass-panel p-4 flex items-center justify-center gap-3">
+                        <i data-lucide="credit-card" class="text-acid"></i> <span class="text-xs font-mono font-bold">BKASH / NAGAD</span>
+                    </div>
+                    <div class="glass-panel p-4 flex items-center justify-center gap-3">
+                        <i data-lucide="users" class="text-acid"></i> <span class="text-xs font-mono font-bold">15K+ CUSTOMERS</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shop Section -->
+            <div id="shop-grid" class="max-w-7xl mx-auto px-4 lg:px-8">
+                
+                <!-- Controls -->
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-surfaceHighlight p-4 rounded-xl border border-white/5">
+                    <div class="relative w-full md:w-96">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"></i>
+                        <input type="text" oninput="app.handlers.search(this.value)" placeholder="Search Netflix, Spotify..." class="w-full bg-black border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:border-acid focus:outline-none placeholder-gray-600">
+                    </div>
+                    <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
+                        <span class="text-xs font-mono text-gray-500 uppercase whitespace-nowrap">Sort By:</span>
+                        <select onchange="app.handlers.sort(this.value)" class="bg-black border border-white/10 rounded-lg py-2 px-3 text-sm text-gray-300 focus:border-acid focus:outline-none">
+                            <option value="featured">Featured</option>
+                            <option value="price-asc">Price: Low to High</option>
+                            <option value="price-desc">Price: High to Low</option>
+                            <option value="name">Name (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                    <h2 class="text-3xl font-bold">CATALOG</h2>
+                    <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" id="category-filters"></div>
+                </div>
+
+                <!-- Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="products-container"></div>
+            </div>
+
+            <!-- Reseller Teaser -->
+            <div class="max-w-7xl mx-auto px-4 lg:px-8 mt-24">
+                <div class="relative overflow-hidden rounded-2xl border border-white/10 bg-surfaceHighlight p-10 md:p-16 text-center group cursor-pointer" onclick="app.router.go('reseller')">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-acid to-transparent"></div>
+                    <span class="text-acid font-mono text-sm tracking-widest mb-4 block">B2B PARTNERSHIP</span>
+                    <h2 class="text-4xl md:text-5xl font-bold mb-6">START YOUR OWN <br> DIGITAL BUSINESS</h2>
+                    <p class="text-gray-400 max-w-2xl mx-auto mb-10 text-lg">Join 500+ active resellers. Wholesale prices & API access.</p>
+                    <button class="border border-acid text-acid hover:bg-acid hover:text-black font-bold py-4 px-10 rounded transition-all">JOIN RESELLER PROGRAM</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: PRODUCT DETAILS -->
+        <section id="view-product" class="view-section">
+            <div class="max-w-7xl mx-auto px-4 lg:px-8 py-10">
+                <button onclick="app.router.go('home')" class="mb-8 text-gray-400 hover:text-white flex items-center gap-2 font-mono text-xs">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> BACK TO STORE
+                </button>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                    <!-- Left: Visual -->
+                    <div class="lg:col-span-5">
+                        <div id="pd-visual" class="aspect-square rounded-xl relative overflow-hidden border border-white/10 flex items-center justify-center p-20 bg-[#0a0a0a] shadow-2xl">
+                            <div class="absolute inset-0 bg-radial-gradient from-white/10 to-transparent opacity-30"></div>
+                            <!-- Image will be injected here -->
+                            <div id="pd-visual-content"></div>
+                        </div>
+                        <div class="mt-6 glass-panel p-5 rounded-lg border-l-2 border-l-acid">
+                            <h4 class="font-bold flex items-center gap-2 mb-2"><i data-lucide="shield-check" class="text-acid w-5 h-5"></i> Warranty Policy</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">Full Term Warranty included. If the account stops working, we replace it instantly.</p>
+                        </div>
+                    </div>
+
+                    <!-- Right: Info -->
+                    <div class="lg:col-span-7">
+                        <div class="flex gap-2 mb-4" id="pd-badges"></div>
+                        <h1 id="pd-title" class="text-4xl md:text-5xl font-bold mb-4">Product Title</h1>
+                        <p id="pd-desc" class="text-gray-400 text-lg mb-8">Premium subscription with full warranty.</p>
+
+                        <!-- Configurator -->
+                        <div class="bg-surfaceHighlight rounded-xl p-6 border border-white/5 mb-8">
+                            <div class="mb-6">
+                                <label class="text-xs font-mono text-gray-500 mb-2 block uppercase">Account Type</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button onclick="app.product.setType('shared')" id="btn-type-shared" class="border border-acid bg-acid/10 text-white py-3 rounded text-sm font-bold transition-all">Shared Account</button>
+                                    <button onclick="app.product.setType('private')" id="btn-type-private" class="border border-white/10 hover:bg-white/5 text-gray-400 py-3 rounded text-sm font-bold transition-all">Private Account</button>
+                                </div>
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="text-xs font-mono text-gray-500 mb-2 block uppercase">Duration</label>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <button onclick="app.product.setDuration(1)" class="dur-btn active p-2 border border-white/10 rounded text-sm hover:border-acid transition-colors">1 Month</button>
+                                    <button onclick="app.product.setDuration(3)" class="dur-btn p-2 border border-white/10 rounded text-sm hover:border-acid transition-colors">3 Months</button>
+                                    <button onclick="app.product.setDuration(6)" class="dur-btn p-2 border border-white/10 rounded text-sm hover:border-acid transition-colors">6 Months</button>
+                                    <button onclick="app.product.setDuration(12)" class="dur-btn p-2 border border-white/10 rounded text-sm hover:border-acid transition-colors">1 Year</button>
+                                </div>
+                            </div>
+
+                            <div id="private-input-container" class="mb-6 hidden">
+                                <label class="text-xs font-mono text-acid mb-2 block uppercase">Enter Your Email Address</label>
+                                <input type="email" id="custom-email" placeholder="e.g. yourname@gmail.com" class="w-full bg-black border border-white/20 rounded p-3 text-white focus:border-acid focus:outline-none">
+                            </div>
+
+                            <div class="h-px bg-white/10 my-6"></div>
+
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="block text-xs text-gray-400 font-mono">TOTAL PRICE</span>
+                                    <span id="pd-price" class="text-3xl font-bold text-white">৳ 0</span>
+                                </div>
+                                <button onclick="app.cart.add()" class="bg-acid hover:bg-white text-black font-bold py-3 px-8 rounded flex items-center gap-2 transition-transform active:scale-95">
+                                    ADD TO CART <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suggested -->
+                <div class="mt-20 pt-10 border-t border-white/5">
+                    <h3 class="text-2xl font-bold mb-6">YOU MIGHT ALSO LIKE</h3>
+                    <div id="pd-suggested" class="grid grid-cols-1 md:grid-cols-4 gap-6"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: CART -->
+        <section id="view-cart" class="view-section">
+            <div class="max-w-4xl mx-auto px-4 lg:px-8 py-10">
+                <h1 class="text-3xl font-bold mb-8">YOUR CART</h1>
+                <div id="cart-items-container" class="space-y-4 mb-8"></div>
+                <div id="cart-summary" class="hidden">
+                    <div class="flex justify-between items-center text-xl font-bold border-t border-white/10 pt-6 mb-6">
+                        <span>Total</span>
+                        <span id="cart-total" class="text-acid">৳0</span>
+                    </div>
+                    <div id="cart-login-prompt" class="bg-surfaceHighlight p-6 rounded-lg border border-white/10 text-center mb-6">
+                        <p class="mb-4 text-sm text-gray-300">You must login to save your order.</p>
+                        <button onclick="app.router.go('login')" class="bg-white text-black font-bold py-2 px-6 rounded text-sm hover:bg-gray-200">LOGIN TO CONTINUE</button>
+                    </div>
+                    <button id="btn-proceed-checkout" onclick="app.router.go('checkout')" class="w-full bg-acid text-black font-bold py-4 rounded hidden hover:bg-white transition-colors">PROCEED TO CHECKOUT</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 4: CHECKOUT -->
+        <section id="view-checkout" class="view-section">
+            <div class="max-w-3xl mx-auto px-4 lg:px-8 py-10">
+                <div class="flex items-center gap-4 mb-8 text-sm font-mono text-gray-500">
+                    <span class="text-acid">1. Cart</span> <span>/</span> <span class="text-white">2. Payment</span> <span>/</span> <span>3. Dashboard</span>
+                </div>
+                <div class="bg-surfaceHighlight border border-white/10 rounded-xl p-8">
+                    <h2 class="text-2xl font-bold mb-6">MANUAL PAYMENT</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="payment" value="bkash" class="peer sr-only" checked onchange="app.checkout.toggleMethod('bkash')">
+                            <div class="p-4 border border-white/20 rounded-lg peer-checked:border-pink-500 peer-checked:bg-pink-500/10 transition-all flex items-center justify-between">
+                                <span class="font-bold">bKash Personal</span>
+                                <div class="w-4 h-4 rounded-full border border-white/40 peer-checked:bg-pink-500"></div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="payment" value="nagad" class="peer sr-only" onchange="app.checkout.toggleMethod('nagad')">
+                            <div class="p-4 border border-white/20 rounded-lg peer-checked:border-orange-500 peer-checked:bg-orange-500/10 transition-all flex items-center justify-between">
+                                <span class="font-bold">Nagad Personal</span>
+                                <div class="w-4 h-4 rounded-full border border-white/40 peer-checked:bg-orange-500"></div>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="glass-panel p-6 rounded-lg mb-8 bg-black/40">
+                        <p class="text-sm text-gray-400 mb-2">1. Go to your bKash/Nagad App.</p>
+                        <p class="text-sm text-gray-400 mb-2">2. Use <span class="text-white font-bold">Send Money</span> option.</p>
+                        <p class="text-sm text-gray-400 mb-4">3. Send <span id="checkout-amount" class="text-acid font-bold">৳0</span> to:</p>
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="bg-white text-black font-mono text-lg font-bold px-4 py-2 rounded" id="payment-number">01700-000000</div>
+                            <button class="text-xs text-acid underline">Copy</button>
+                        </div>
+                        <label class="block text-xs font-mono text-gray-500 mb-2 uppercase">Enter Transaction ID (TrxID)</label>
+                        <input type="text" id="trx-id" placeholder="e.g. 9G7HA2..." class="w-full bg-black border border-white/20 rounded p-3 text-white focus:border-acid focus:outline-none font-mono mb-4">
+                        <label class="block text-xs font-mono text-acid mb-2 uppercase">Your WhatsApp Number (For Delivery)</label>
+                        <input type="tel" id="whatsapp-num" placeholder="017..." class="w-full bg-black border border-acid/50 rounded p-3 text-white focus:border-acid focus:outline-none font-mono">
+                    </div>
+                    <button onclick="app.checkout.submit()" class="w-full bg-acid hover:bg-white text-black font-bold py-3 px-8 rounded flex justify-center items-center gap-2">CONFIRM & ORDER</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 5: LOGIN -->
+        <section id="view-login" class="view-section">
+            <div class="max-w-md mx-auto px-4 mt-20">
+                <div class="bg-surfaceHighlight border border-white/10 rounded-2xl p-8 text-center">
+                    <h2 class="text-3xl font-bold mb-2">WELCOME BACK</h2>
+                    <button onclick="app.auth.login('google')" class="w-full bg-white text-black font-bold py-3 rounded flex items-center justify-center gap-2 mt-8 mb-4 hover:bg-gray-200 transition-colors">Continue with Google</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 6: DASHBOARD -->
+        <section id="view-dashboard" class="view-section">
+            <div class="max-w-7xl mx-auto px-4 lg:px-8 py-10">
+                <div class="flex items-center justify-between mb-8">
+                    <h1 class="text-3xl font-bold">MY DASHBOARD</h1>
+                    <button onclick="app.auth.logout()" class="text-xs text-red-400 hover:text-red-300 font-mono underline">LOGOUT</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <div class="glass-panel p-6 rounded-lg">
+                        <span class="text-gray-400 text-xs font-mono block mb-2">ACTIVE ORDERS</span>
+                        <span class="text-3xl font-bold text-white" id="dash-active-count">0</span>
+                    </div>
+                    <div class="glass-panel p-6 rounded-lg">
+                        <span class="text-gray-400 text-xs font-mono block mb-2">TOTAL SPENT</span>
+                        <span class="text-3xl font-bold text-acid" id="dash-spent">৳0</span>
+                    </div>
+                </div>
+                <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i data-lucide="layers" class="w-5 h-5 text-acid"></i> MY ORDERS</h2>
+                <div id="dashboard-orders" class="space-y-4"></div>
+            </div>
+        </section>
+
+        <!-- VIEW 7: RESELLER -->
+        <section id="view-reseller" class="view-section">
+            <div class="max-w-7xl mx-auto px-4 lg:px-8 py-10">
+                <div class="text-center mb-16">
+                    <span class="bg-acid text-black text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">Pro Program</span>
+                    <h1 class="text-5xl md:text-6xl font-bold mb-6">PARTNER WITH DIZITAL</h1>
+                    <p class="text-gray-400 text-lg max-w-2xl mx-auto">Scale your business with wholesale prices and API access.</p>
+                </div>
+                <div class="bg-surfaceHighlight rounded-2xl p-8 border border-white/10 mb-20">
+                    <h2 class="text-2xl font-bold mb-8 text-center">DISCOUNT TIERS</h2>
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="text-gray-400 text-xs font-mono uppercase border-b border-white/10"><tr><th class="p-4">Tier</th><th class="p-4">Min Deposit</th><th class="p-4">Discount</th></tr></thead>
+                        <tbody>
+                            <tr class="border-b border-white/5"><td class="p-4 font-bold text-white">Starter</td><td class="p-4">৳5,000</td><td class="p-4">5%</td></tr>
+                            <tr class="border-b border-white/5"><td class="p-4 font-bold text-acid">Gold</td><td class="p-4">৳20,000</td><td class="p-4">15%</td></tr>
+                            <tr><td class="p-4 font-bold text-lavender">Diamond</td><td class="p-4">৳50,000+</td><td class="p-4">25%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 8: SUPPORT -->
+        <section id="view-support" class="view-section">
+            <div class="max-w-2xl mx-auto px-4 lg:px-8 mt-10">
+                <h1 class="text-3xl font-bold mb-6">OPEN A TICKET</h1>
+                <div class="glass-panel p-8 rounded-xl">
+                    <label class="block text-sm text-gray-400 mb-2">Subject</label>
+                    <select class="w-full bg-black border border-white/20 rounded p-3 text-white mb-4 focus:border-acid focus:outline-none"><option>Login Issue</option><option>Payment</option></select>
+                    <textarea rows="4" class="w-full bg-black border border-white/20 rounded p-3 text-white mb-6 focus:border-acid focus:outline-none" placeholder="Describe your issue..."></textarea>
+                    <button onclick="alert('Ticket Created!')" class="w-full bg-white text-black font-bold py-3 rounded hover:bg-gray-200">SUBMIT</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-white/10 bg-black py-12">
+        <div class="max-w-7xl mx-auto px-4 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-2xl font-bold tracking-tighter text-white">dizital<span class="text-acid">.</span></div>
+            <div class="flex gap-6 text-sm text-gray-500 font-mono">
+                <button onclick="app.router.go('home')" class="hover:text-white">STORE</button>
+                <button onclick="app.router.go('support')" class="hover:text-white">SUPPORT</button>
+            </div>
+            <div class="text-gray-600 text-xs font-mono">© 2025 DIZITAL STORE BD.</div>
+        </div>
+    </footer>
+
+    <!-- JS LOGIC -->
+    <script>
+        const products = [
+            // STREAMING
+            { id: 1, title: 'Netflix Premium', category: 'Streaming', price: 350, logo: 'https://cdn.simpleicons.org/netflix/E50914', gradient: 'from-red-600 to-black', tags: ['4K UHD', 'Private'], badges: ['BEST SELLER'], onSale: false },
+            { id: 2, title: 'Amazon Prime Video', category: 'Streaming', price: 200, logo: 'https://cdn.simpleicons.org/primevideo/00A8E1', gradient: 'from-blue-600 to-black', tags: ['4K', 'Exclusive'], badges: [], onSale: true },
+            { id: 3, title: 'Mubi', category: 'Streaming', price: 300, logo: 'https://cdn.simpleicons.org/mubi/white', gradient: 'from-blue-900 to-black', tags: ['Cinema', 'Cult'], badges: [], onSale: false },
+            { id: 4, title: 'Zee5', category: 'Streaming', price: 150, logo: null, icon: 'tv-2', gradient: 'from-purple-600 to-pink-600', tags: ['Drama', 'Shows'], badges: [], onSale: false },
+            { id: 5, title: 'SonyLIV', category: 'Streaming', price: 150, logo: null, icon: 'play-circle', gradient: 'from-blue-500 to-purple-500', tags: ['Sports', 'Live'], badges: [], onSale: true },
+            { id: 6, title: 'Disney+ Hotstar', category: 'Streaming', price: 250, logo: 'https://cdn.simpleicons.org/disneyplus/white', gradient: 'from-blue-800 to-blue-500', tags: ['Marvel', 'StarWars'], badges: ['HOT'], onSale: false },
+            { id: 7, title: 'HBO Max', category: 'Streaming', price: 300, logo: 'https://cdn.simpleicons.org/hbo/white', gradient: 'from-purple-800 to-black', tags: ['Series', 'Movies'], badges: [], onSale: false },
+            { id: 8, title: 'Hulu', category: 'Streaming', price: 250, logo: 'https://cdn.simpleicons.org/hulu/1CE783', gradient: 'from-green-500 to-black', tags: ['TV', 'Originals'], badges: [], onSale: false },
+            // MUSIC
+            { id: 9, title: 'Spotify Premium', category: 'Music', price: 150, logo: 'https://cdn.simpleicons.org/spotify/1DB954', gradient: 'from-green-600 to-black', tags: ['Ad-Free', 'Offline'], badges: [], onSale: false },
+            { id: 10, title: 'Apple Music', category: 'Music', price: 200, logo: 'https://cdn.simpleicons.org/applemusic/FB233B', gradient: 'from-red-500 to-pink-500', tags: ['HiFi', 'Lossless'], badges: [], onSale: false },
+            { id: 11, title: 'Audible', category: 'Music', price: 300, logo: 'https://cdn.simpleicons.org/audible/F8991C', gradient: 'from-orange-500 to-yellow-500', tags: ['Books', 'Audio'], badges: [], onSale: true },
+            { id: 12, title: 'YouTube Music', category: 'Music', price: 200, logo: 'https://cdn.simpleicons.org/youtubemusic/FF0000', gradient: 'from-red-600 to-black', tags: ['Video', 'Music'], badges: [], onSale: false },
+            // AI
+            { id: 13, title: 'ChatGPT Plus', category: 'AI Tools', price: 450, logo: 'https://cdn.simpleicons.org/openai/10A37F', gradient: 'from-emerald-600 to-teal-900', tags: ['GPT-4', 'DALL-E'], badges: ['TRENDING'], onSale: false },
+            { id: 14, title: 'Midjourney', category: 'AI Tools', price: 600, logo: 'https://cdn.simpleicons.org/midjourney/white', gradient: 'from-blue-900 to-indigo-900', tags: ['Art', 'GenAI'], badges: [], onSale: false },
+            { id: 15, title: 'Claude Pro', category: 'AI Tools', price: 500, logo: 'https://cdn.simpleicons.org/anthropic/D97757', gradient: 'from-orange-700 to-red-900', tags: ['Opus', '3.5 Sonnet'], badges: [], onSale: false },
+            { id: 16, title: 'Canva Pro', category: 'AI Tools', price: 99, logo: 'https://cdn.simpleicons.org/canva/00C4CC', gradient: 'from-purple-500 to-teal-400', tags: ['Design', 'Teams'], badges: ['LOW STOCK'], onSale: true },
+            { id: 17, title: 'Adobe Creative Cloud', category: 'AI Tools', price: 800, logo: 'https://cdn.simpleicons.org/adobe/FF0000', gradient: 'from-red-600 to-purple-600', tags: ['All Apps', 'Cloud'], badges: [], onSale: false },
+            { id: 18, title: 'Jasper', category: 'AI Tools', price: 700, logo: null, icon: 'sparkles', gradient: 'from-purple-600 to-blue-600', tags: ['Copy', 'Marketing'], badges: [], onSale: false },
+            // LEARNING
+            { id: 19, title: 'Coursera Plus', category: 'Learning', price: 400, logo: 'https://cdn.simpleicons.org/coursera/0056D2', gradient: 'from-blue-600 to-blue-400', tags: ['Certs', 'Courses'], badges: [], onSale: true },
+            { id: 20, title: 'Udemy Personal', category: 'Learning', price: 300, logo: 'https://cdn.simpleicons.org/udemy/white', gradient: 'from-purple-600 to-white', tags: ['Skills', 'Dev'], badges: [], onSale: false },
+            { id: 21, title: 'LinkedIn Learning', category: 'Learning', price: 400, logo: 'https://cdn.simpleicons.org/linkedin/0A66C2', gradient: 'from-blue-700 to-blue-900', tags: ['Pro', 'Business'], badges: [], onSale: false },
+            { id: 22, title: 'Skillshare', category: 'Learning', price: 200, logo: 'https://cdn.simpleicons.org/skillshare/00FF84', gradient: 'from-green-400 to-teal-500', tags: ['Creative', 'Classes'], badges: [], onSale: false },
+            { id: 23, title: 'Duolingo Super', category: 'Learning', price: 150, logo: 'https://cdn.simpleicons.org/duolingo/58CC02', gradient: 'from-green-500 to-lime-400', tags: ['Lang', 'No Ads'], badges: [], onSale: true },
+            { id: 24, title: 'MasterClass', category: 'Learning', price: 500, logo: 'https://cdn.simpleicons.org/masterclass/white', gradient: 'from-gray-800 to-black', tags: ['Expert', 'Video'], badges: [], onSale: false },
+            // PRODUCTIVITY
+            { id: 25, title: 'Microsoft 365', category: 'Productivity', price: 300, logo: 'https://cdn.simpleicons.org/microsoft/white', gradient: 'from-blue-500 to-orange-500', tags: ['Office', '1TB'], badges: [], onSale: false },
+            { id: 26, title: 'Google One', category: 'Productivity', price: 200, logo: 'https://cdn.simpleicons.org/google/4285F4', gradient: 'from-blue-500 to-green-500', tags: ['Storage', 'VPN'], badges: [], onSale: false },
+            { id: 27, title: 'Zoom Pro', category: 'Productivity', price: 800, logo: 'https://cdn.simpleicons.org/zoom/2D8CFF', gradient: 'from-blue-600 to-blue-400', tags: ['Meeting', 'Unltd'], badges: [], onSale: false },
+            { id: 28, title: 'Slack Pro', category: 'Productivity', price: 600, logo: 'https://cdn.simpleicons.org/slack/4A154B', gradient: 'from-purple-800 to-red-500', tags: ['Team', 'Chat'], badges: [], onSale: false },
+            { id: 29, title: 'Notion Plus', category: 'Productivity', price: 350, logo: 'https://cdn.simpleicons.org/notion/white', gradient: 'from-gray-900 to-gray-600', tags: ['Wiki', 'AI'], badges: [], onSale: false },
+            { id: 30, title: 'Evernote', category: 'Productivity', price: 250, logo: 'https://cdn.simpleicons.org/evernote/00A82D', gradient: 'from-green-700 to-green-500', tags: ['Notes', 'Sync'], badges: [], onSale: false },
+            // SECURITY
+            { id: 31, title: 'NordVPN', category: 'Security', price: 250, logo: 'https://cdn.simpleicons.org/nordvpn/4687FF', gradient: 'from-blue-700 to-cyan-500', tags: ['Fast', 'Secure'], badges: [], onSale: true },
+            { id: 32, title: 'ExpressVPN', category: 'Security', price: 300, logo: 'https://cdn.simpleicons.org/expressvpn/white', gradient: 'from-red-700 to-orange-600', tags: ['Privacy', 'Global'], badges: [], onSale: false },
+            { id: 33, title: 'Surfshark', category: 'Security', price: 200, logo: 'https://cdn.simpleicons.org/surfshark/00D39B', gradient: 'from-teal-600 to-cyan-400', tags: ['Unltd', 'Devices'], badges: [], onSale: false },
+        ];
+
+        const app = {
+            state: { user: null, cart: [], orders: [], view: 'home', activeCategory: 'All', productViewId: null, productConfig: { type: 'shared', duration: 1 }, searchQuery: '', sortBy: 'featured' },
+            init: () => {
+                app.render.products(); app.render.navAuth(); app.utils.lucide();
+                const savedUser = localStorage.getItem('dizital_user');
+                if(savedUser) app.state.user = JSON.parse(savedUser);
+                app.render.navAuth();
+            },
+            handlers: {
+                search: (q) => { app.state.searchQuery = q.toLowerCase(); app.render.products(); },
+                sort: (val) => { app.state.sortBy = val; app.render.products(); }
+            },
+            router: {
+                go: (viewId) => {
+                    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+                    document.getElementById(`view-${viewId}`)?.classList.add('active');
+                    window.scrollTo(0, 0);
+                    app.state.view = viewId;
+                    if(viewId === 'cart') app.render.cart();
+                    if(viewId === 'dashboard') app.render.dashboard();
+                }
+            },
+            scrollTo: (id) => document.getElementById(id).scrollIntoView({ behavior: 'smooth' }),
+            auth: {
+                login: () => {
+                    app.state.user = { name: 'Demo User', email: 'user@dizital.com' };
+                    localStorage.setItem('dizital_user', JSON.stringify(app.state.user));
+                    app.render.navAuth();
+                    app.state.cart.length > 0 ? app.router.go('cart') : app.router.go('dashboard');
+                },
+                logout: () => { app.state.user = null; localStorage.removeItem('dizital_user'); app.render.navAuth(); app.router.go('home'); }
+            },
+            product: {
+                open: (id) => {
+                    const p = products.find(x => x.id === id);
+                    app.state.productViewId = id;
+                    document.getElementById('pd-title').innerText = p.title;
+                    document.getElementById('pd-price').innerText = '৳' + p.price;
+                    
+                    const visualContainer = document.getElementById('pd-visual-content');
+                    if (p.logo) {
+                        visualContainer.innerHTML = `<img src="${p.logo}" class="w-full h-full object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.1)] z-10 relative">`;
+                    } else {
+                        visualContainer.innerHTML = `<i data-lucide="${p.icon || 'package'}" class="w-24 h-24 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] z-10 relative"></i>`;
+                        app.utils.lucide();
+                    }
+                    
+                    // Suggested Logic
+                    const suggested = products.filter(x => x.category === p.category && x.id !== id).slice(0, 4);
+                    const suggContainer = document.getElementById('pd-suggested');
+                    if(suggested.length > 0) {
+                        suggContainer.innerHTML = suggested.map(s => `
+                            <div onclick="app.product.open(${s.id})" class="glass-panel group cursor-pointer hover:border-acid/50 transition-all rounded-lg p-4">
+                                <div class="h-32 bg-[#0a0a0a] rounded flex items-center justify-center mb-3 overflow-hidden relative border border-white/5">
+                                    <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                                    ${s.logo ? `<img src="${s.logo}" class="h-10 w-10 object-contain drop-shadow-lg">` : `<i data-lucide="${s.icon || 'package'}" class="h-10 w-10 text-white"></i>`}
+                                </div>
+                                <h4 class="font-bold text-sm truncate">${s.title}</h4>
+                                <span class="text-acid text-xs font-bold">৳${s.price}</span>
+                            </div>
+                        `).join('');
+                        app.utils.lucide();
+                    } else {
+                        suggContainer.innerHTML = '<p class="text-gray-500 text-sm">No similar products found.</p>';
+                    }
+                    app.router.go('product');
+                },
+                setType: (type) => {
+                    app.state.productConfig.type = type;
+                    document.getElementById('private-input-container').classList.toggle('hidden', type === 'shared');
+                    const btnS = document.getElementById('btn-type-shared');
+                    const btnP = document.getElementById('btn-type-private');
+                    if(type === 'shared') {
+                        btnS.className = 'border border-acid bg-acid/10 text-white py-3 rounded text-sm font-bold transition-all';
+                        btnP.className = 'border border-white/10 hover:bg-white/5 text-gray-400 py-3 rounded text-sm font-bold transition-all';
+                    } else {
+                        btnP.className = 'border border-acid bg-acid/10 text-white py-3 rounded text-sm font-bold transition-all';
+                        btnS.className = 'border border-white/10 hover:bg-white/5 text-gray-400 py-3 rounded text-sm font-bold transition-all';
+                    }
+                    app.product.calcPrice();
+                },
+                setDuration: (months) => {
+                    app.state.productConfig.duration = months;
+                    document.querySelectorAll('.dur-btn').forEach(b => { b.classList.remove('bg-acid', 'text-black', 'border-acid'); b.classList.add('border-white/10'); });
+                    event.target.classList.remove('border-white/10'); event.target.classList.add('bg-acid', 'text-black', 'border-acid');
+                    app.product.calcPrice();
+                },
+                calcPrice: () => {
+                    const p = products.find(x => x.id === app.state.productViewId);
+                    let base = p.price;
+                    if(app.state.productConfig.type === 'private') base *= 2.5;
+                    let total = base * app.state.productConfig.duration;
+                    if(app.state.productConfig.duration >= 6) total *= 0.9;
+                    document.getElementById('pd-price').innerText = '৳' + Math.floor(total);
+                }
+            },
+            cart: {
+                add: () => {
+                    const p = products.find(x => x.id === app.state.productViewId);
+                    const item = { id: Date.now(), title: p.title, type: app.state.productConfig.type, duration: app.state.productConfig.duration, price: parseInt(document.getElementById('pd-price').innerText.replace('৳', '')) };
+                    app.state.cart.push(item);
+                    app.utils.toast('Added to Cart');
+                    document.getElementById('cart-count').innerText = app.state.cart.length;
+                    document.getElementById('cart-count').classList.remove('hidden');
+                    app.router.go('cart');
+                },
+                remove: (id) => { app.state.cart = app.state.cart.filter(x => x.id !== id); app.render.cart(); document.getElementById('cart-count').innerText = app.state.cart.length; }
+            },
+            checkout: {
+                toggleMethod: (m) => document.getElementById('payment-number').innerText = m === 'bkash' ? '01700-000000 (Personal)' : '01800-000000 (Personal)',
+                submit: () => {
+                    if(!document.getElementById('trx-id').value || !document.getElementById('whatsapp-num').value) return alert('Please fill all fields');
+                    app.state.cart.forEach(i => app.state.orders.push({ ...i, orderId: 'ORD-'+Math.floor(Math.random()*9000), status: 'Pending', expiry: 'Processing...' }));
+                    app.state.cart = [];
+                    document.getElementById('cart-count').innerText = '0';
+                    document.getElementById('cart-count').classList.add('hidden');
+                    app.utils.toast('Order Placed! Check Dashboard.');
+                    setTimeout(() => app.render.dashboard(), 100);
+                    app.router.go('dashboard');
+                }
+            },
+            render: {
+                products: () => {
+                    let filtered = [...products];
+                    if(app.state.searchQuery) filtered = filtered.filter(p => p.title.toLowerCase().includes(app.state.searchQuery));
+                    if(app.state.activeCategory !== 'All') {
+                        if(app.state.activeCategory === 'Offers') filtered = filtered.filter(p => p.onSale);
+                        else filtered = filtered.filter(p => p.category === app.state.activeCategory);
+                    }
+                    if(app.state.sortBy === 'price-asc') filtered.sort((a,b) => a.price - b.price);
+                    if(app.state.sortBy === 'price-desc') filtered.sort((a,b) => b.price - a.price);
+                    if(app.state.sortBy === 'name') filtered.sort((a,b) => a.title.localeCompare(b.title));
+                    
+                    const container = document.getElementById('products-container');
+                    if(filtered.length === 0) return container.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500">No products found.</div>';
+                    
+                    container.innerHTML = filtered.map(p => `
+                        <div onclick="app.product.open(${p.id})" class="glass-panel group cursor-pointer hover:border-acid/50 transition-all duration-300 relative rounded-lg">
+                            <div class="h-40 bg-[#0a0a0a] border-b border-white/5 relative flex items-center justify-center p-8 overflow-hidden rounded-t-lg">
+                                <div class="absolute inset-0 bg-radial-gradient from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                ${p.logo ? `<img src="${p.logo}" class="h-14 w-14 object-contain z-10 relative drop-shadow-xl transform group-hover:scale-110 transition-transform duration-300" loading="lazy">` : `<i data-lucide="${p.icon || 'package'}" class="h-10 w-10 text-white z-10 relative transform group-hover:scale-110 transition-transform duration-300"></i>`}
+                                <div class="absolute top-2 left-2 flex flex-col gap-1 z-20">
+                                    ${p.onSale ? '<span class="bg-acid text-black text-[10px] px-2 py-1 font-bold font-mono">FLASH DEAL</span>' : ''}
+                                    ${p.badges.map(b => `<span class="bg-black/50 backdrop-blur text-white text-[10px] px-2 py-1 font-mono border border-white/20">${b}</span>`).join('')}
+                                </div>
+                            </div>
+                            <div class="p-5">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-xs text-gray-400 font-mono uppercase">${p.category}</span>
+                                    <span class="text-acid font-bold">৳${p.price}</span>
+                                </div>
+                                <h3 class="font-bold text-lg mb-4 group-hover:text-acid transition-colors truncate">${p.title}</h3>
+                                <button class="w-full bg-white/5 hover:bg-white hover:text-black text-white py-2 text-sm font-bold transition-all rounded flex items-center justify-center gap-2">VIEW OPTIONS</button>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    const cats = ['All', 'Offers', ...new Set(products.map(p => p.category))];
+                    document.getElementById('category-filters').innerHTML = cats.map(c => 
+                        `<button onclick="app.state.activeCategory = '${c}'; app.render.products()" class="px-4 py-1 rounded-full border border-white/10 text-xs font-mono hover:bg-acid hover:text-black transition-colors whitespace-nowrap ${app.state.activeCategory === c ? 'bg-acid text-black' : 'text-gray-400'}">${c.toUpperCase()}</button>`
+                    ).join('');
+                    app.utils.lucide();
+                },
+                cart: () => {
+                    const container = document.getElementById('cart-items-container');
+                    if(app.state.cart.length === 0) {
+                        container.innerHTML = '<div class="text-center py-20 text-gray-500 font-mono">Your cart is empty.</div>';
+                        document.getElementById('cart-summary').classList.add('hidden');
+                        return;
+                    }
+                    let total = 0;
+                    container.innerHTML = app.state.cart.map(item => {
+                        total += item.price;
+                        return `<div class="glass-panel p-4 rounded flex justify-between items-center"><div><h4 class="font-bold">${item.title}</h4><div class="text-xs text-gray-400 font-mono mt-1">${item.duration} Month(s) • ${item.type.toUpperCase()}</div></div><div class="flex items-center gap-4"><span class="font-bold text-acid">৳${item.price}</span><button onclick="app.cart.remove(${item.id})" class="text-red-500 hover:text-white"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
+                    }).join('');
+                    document.getElementById('cart-total').innerText = '৳' + total;
+                    document.getElementById('checkout-amount').innerText = '৳' + total;
+                    document.getElementById('cart-summary').classList.remove('hidden');
+                    if(app.state.user) {
+                        document.getElementById('cart-login-prompt').classList.add('hidden');
+                        document.getElementById('btn-proceed-checkout').classList.remove('hidden');
+                    } else {
+                        document.getElementById('cart-login-prompt').classList.remove('hidden');
+                        document.getElementById('btn-proceed-checkout').classList.add('hidden');
+                    }
+                    app.utils.lucide();
+                },
+                dashboard: () => {
+                    if(!app.state.user) return app.router.go('login');
+                    document.getElementById('dash-active-count').innerText = app.state.orders.length;
+                    document.getElementById('dash-spent').innerText = '৳' + app.state.orders.reduce((acc, c) => acc + c.price, 0);
+                    const container = document.getElementById('dashboard-orders');
+                    if(app.state.orders.length === 0) container.innerHTML = '<div class="text-center py-10 text-gray-600 font-mono border border-dashed border-white/10 rounded">You have no active orders.</div>';
+                    else container.innerHTML = app.state.orders.map(o => `
+                        <div class="glass-panel p-6 rounded-lg border-l-4 border-l-yellow-500">
+                            <div class="flex justify-between items-start mb-4">
+                                <div><h3 class="font-bold text-lg">${o.title}</h3><span class="text-xs font-mono text-gray-400">ID: ${o.orderId}</span></div>
+                                <span class="text-xs font-bold px-2 py-1 rounded bg-yellow-500/20 text-yellow-500">${o.status.toUpperCase()}</span>
+                            </div>
+                            <div class="bg-black/50 p-3 rounded mb-4"><span class="text-[10px] text-gray-500 block uppercase">Delivery Status</span><span class="text-sm font-mono text-white">We are verifying your payment. Credentials will be sent to your WhatsApp shortly.</span></div>
+                        </div>
+                    `).join('');
+                },
+                navAuth: () => {
+                    const section = document.getElementById('nav-auth-section');
+                    if(app.state.user) section.innerHTML = `<button onclick="app.router.go('dashboard')" class="hidden md:block text-sm font-bold text-white hover:text-acid">MY DASHBOARD</button><div class="w-8 h-8 rounded-full bg-gradient-to-r from-acid to-green-400 flex items-center justify-center text-black font-bold cursor-pointer" onclick="app.router.go('dashboard')">${app.state.user.name.charAt(0)}</div>`;
+                    else section.innerHTML = `<button onclick="app.router.go('login')" class="text-sm font-bold border border-white/20 px-4 py-2 rounded hover:border-acid hover:text-acid transition-colors">LOGIN</button>`;
+                }
+            },
+            utils: {
+                lucide: () => { if(window.lucide) lucide.createIcons(); },
+                toast: (msg) => {
+                    const t = document.createElement('div');
+                    t.className = 'glass-panel p-3 border-l-2 border-l-acid text-xs font-mono text-white flex items-center gap-2 shadow-2xl bg-black transform transition-all duration-500 translate-x-[-100%] opacity-0';
+                    t.innerHTML = `<span class="h-2 w-2 bg-acid rounded-full animate-pulse"></span> ${msg}`;
+                    document.getElementById('toast-container').appendChild(t);
+                    requestAnimationFrame(() => t.classList.remove('translate-x-[-100%]', 'opacity-0'));
+                    setTimeout(() => { t.classList.add('opacity-0'); setTimeout(() => t.remove(), 500); }, 3000);
+                }
+            }
+        };
+        window.addEventListener('DOMContentLoaded', app.init);
+    </script>
+</body>
+</html>
